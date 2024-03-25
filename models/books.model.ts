@@ -9,6 +9,11 @@ export interface IBook {
   publisher: string;
   pages: number;
   category: string;
+  totalStock: number;
+  availableStock: number;
+  patronId: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const bookSchema = new Schema<IBook>({
@@ -20,6 +25,11 @@ const bookSchema = new Schema<IBook>({
   publisher: { type: String },
   pages: { type: Number },
   category: { type: String },
+  totalStock: { type: Number },
+  availableStock: { type: Number },
+  patronId: { type: String },
+  createdAt: { type: Date },
+  updatedAt: { type: Date },
 });
 
 const BookModel: Model<IBook> = mongoose.model("book", bookSchema);

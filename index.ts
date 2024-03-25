@@ -16,6 +16,8 @@ app.use(cors(corsOptions));
 //routers
 import userRoutes from "./routes/user.routes";
 import bookRoutes from "./routes/books.routes";
+import notificationRoutes from "./routes/notification.routes";
+import requestRoutes from "./routes/request.routes";
 
 //testing api
 app.get("/test", (req: Request, res: Response, next: NextFunction) => {
@@ -27,7 +29,7 @@ app.get("/test", (req: Request, res: Response, next: NextFunction) => {
 //refresh user access token
 app.use(refreshAccessTokenMiddleware);
 
-app.use("/api/v1", userRoutes, bookRoutes);
+app.use("/api/v1", userRoutes, bookRoutes, notificationRoutes, requestRoutes);
 
 //route to backup the database
 app.get("/backup", (req: Request, res: Response, next: NextFunction) => {
