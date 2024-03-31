@@ -2,17 +2,41 @@ import { Request, Response, NextFunction } from "express";
 import ErrorHandler from "../utils/ErrorHandler";
 import catchAsyncErrors from "../middleware/catchAsyncErrors";
 import BookModel, { IBook } from "../models/books.model";
+import UserModel from "../models/user.model";
 
 export const createBook = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const bookData = req.body as IBook;
+      const { cover, title, authors, description, publicationDate, publisher, pages, category, totalStock, patronId } = req.body as IBook;
+    
 
-      if (!bookData) {
+      if (!cover || !title || !authors || !description || !publicationDate || !publisher || !pages || !category || !totalStock || !patronId) {
         return next(new ErrorHandler("book data is empty", 400));
       }
 
-      const created_book = await BookModel.create(bookData);
+      const patron = await UserModel.findById(patronId);
+
+      if (!patron) {
+        return next(new ErrorHandler("Patron not found", 404));
+      }
+
+      if (patron.role !== "patron") {
+        return next(new ErrorHandler("Only librarians can create books", 400));
+      }
+
+      const created_book = await BookModel.create({
+        cover,
+        title,
+        authors,
+        description,
+        publicationDate,
+        publisher,
+        pages,
+        category,
+        totalStock,
+        availableStock: totalStock,
+        patronId,
+      });
 
       console.log("reached", created_book);
 

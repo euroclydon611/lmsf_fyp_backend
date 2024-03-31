@@ -7,7 +7,7 @@ import {
 } from "../controllers/notification.controller";
 import { isAuthenticated } from "../middleware/auth";
 
-router.get("/get-notification-user", isAuthenticated, getNotificationByUser);
-router.patch("/update-notification", isAuthenticated, updateNotification);
+router.get("/notifications/:id", isAuthenticated, getNotificationByUser);
+router.patch("/notifications", isAuthenticated, updateNotification);
 
 export default router;

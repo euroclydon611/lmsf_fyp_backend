@@ -8,7 +8,7 @@ export interface IRequest {
     approveDate: Date | null;
     inDate: Date | null;
     outDate: Date | null;
-    inPrevDate: Date;
+    inPrevDate: Date | null;
     status: string;
     createdAt: Date;
     updatedAt: Date;

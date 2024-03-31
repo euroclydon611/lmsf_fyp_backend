@@ -20,11 +20,10 @@ interface IRegistrationBody {
 export const UserRegistration = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { index_no, surname, first_name, other_name, date_of_birth, role } =
+      const { index_no, surname, first_name, other_name, password, date_of_birth, role } =
         req.body as IRegistrationBody;
 
-      const password = date_of_birth;
-
+   
       const isStaffExist = await UserModel.findOne({ index_no });
       if (isStaffExist) {
         return next(new ErrorHandler("Student already exists", 400));

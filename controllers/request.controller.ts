@@ -9,7 +9,7 @@ import NotificationModel from "../models/notification.model";
 export const makeRequest = catchAsyncErrors(
     async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const { userId, bookId, inPrevDate } = req.body;
+            const { userId, bookId } = req.body;
             if (!userId || !bookId) {
                 return next(new ErrorHandler("Invalid entries", 400));
             }
@@ -33,7 +33,7 @@ export const makeRequest = catchAsyncErrors(
                 inDate: null,
                 outDate: null,
                 approvedBy: null,
-                inPrevDate: new Date(inPrevDate),
+                inPrevDate: null,
                 status: "Pending",
                 createdAt: new Date(),
                 updatedAt: new Date(),
@@ -42,7 +42,7 @@ export const makeRequest = catchAsyncErrors(
             await NotificationModel.create({
                 userId: book.patronId,
                 message: `${user.surname} ${user.first_name} has requested to borrow ${book.title}`,
-                status: "Pending",
+                status: "unread",
                 createdAt: new Date(),
                 updatedAt: new Date(),
             })
@@ -94,12 +94,21 @@ export const approveRequest = catchAsyncErrors(
             if (!patron) {
                 return next(new ErrorHandler("Patron not found", 404));
             }
-            if (patron.role !== "Patron") {
+            if (patron.role !== "patron") {
                 return next(
                     new ErrorHandler("Only librarians can approve requests", 400)
                 );
             }
-            const request = await RequestModel.findByIdAndUpdate(
+
+            const request = await RequestModel.findById(requestId);
+            if (!request) {
+                return next(new ErrorHandler("Request not found", 404));
+            }
+
+            if (request.approveDate) {
+                return next(new ErrorHandler("Request already approved", 400));
+            }
+            const requestUpdate = await RequestModel.findByIdAndUpdate(
                 requestId,
                 {
                     approveDate: new Date(),
@@ -110,16 +119,18 @@ export const approveRequest = catchAsyncErrors(
                 { new: true }
             );
             const book = await BookModel.find({ _id: request?.bookId });
+           
             await NotificationModel.create({
                 userId: request?.userId,
                 message: `Your request for ${book[0]?.title} has been approved`,
-                status: "Approved",
+                status: "unread",
                 createdAt: new Date(),
                 updatedAt: new Date(),
+
             })
             res
                 .status(200)
-                .json({ message: "Request approved successfully", request });
+                .json({ message: "Request approved successfully", requestUpdate });
         } catch (error: any) {
             console.log(error);
             return next(new ErrorHandler(error.message, 400));
@@ -130,7 +141,7 @@ export const approveRequest = catchAsyncErrors(
 export const checkoutRequest = catchAsyncErrors(
     async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const { requestId, patronId } = req.body;
+            const { requestId, patronId, inPrevDate } = req.body;
             if (!requestId) {
                 return next(new ErrorHandler("Invalid entries", 400));
             }
@@ -138,7 +149,8 @@ export const checkoutRequest = catchAsyncErrors(
             if (!patron) {
                 return next(new ErrorHandler("Patron not found", 404));
             }
-            if (patron.role !== "Patron") {
+            console.log("patron", patron);
+            if (patron.role !== "patron") {
                 return next(
                     new ErrorHandler("Only librarians can approve checkout", 400)
                 );
@@ -150,6 +162,7 @@ export const checkoutRequest = catchAsyncErrors(
                     status: "Out",
                     updatedAt: new Date(),
                     approvedBy: patronId,
+                    inPrevDate: inPrevDate,
                 },
                 { new: true }
             );
@@ -178,20 +191,29 @@ export const checkoutRequest = catchAsyncErrors(
 export const approveAndCheckoutRequest = catchAsyncErrors(
     async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const { requestId, patronId } = req.body;
-            if (!requestId) {
+            const { requestId, patronId, inPrevDate } = req.body;
+            if (!requestId || !patronId || !inPrevDate) {
                 return next(new ErrorHandler("Invalid entries", 400));
             }
             const patron = await UserModel.findById(patronId);
             if (!patron) {
                 return next(new ErrorHandler("Patron not found", 404));
             }
-            if (patron.role !== "Patron") {
+            if (patron.role !== "patron") {
                 return next(
                     new ErrorHandler("Only librarians can approve checkout", 400)
                 );
             }
-            const request = await RequestModel.findByIdAndUpdate(
+            const request = await RequestModel.findById(requestId);
+            if (!request) {
+                return next(new ErrorHandler("Request not found", 404));
+            }
+            console.log("bk", request?.bookId);
+            const book = await BookModel.findById(request?.bookId);
+            if (!book) {
+                return next(new ErrorHandler("Book not found", 404));
+            }
+            const requestUpdate = await RequestModel.findByIdAndUpdate(
                 requestId,
                 {
                     approveDate: new Date(),
@@ -199,13 +221,11 @@ export const approveAndCheckoutRequest = catchAsyncErrors(
                     status: "Out",
                     approvedBy: patronId,
                     updatedAt: new Date(),
+                    inPrevDate: inPrevDate,
                 },
                 { new: true }
             );
-            const book = await BookModel.findById(request?.bookId);
-            if (!book) {
-                return next(new ErrorHandler("Book not found", 404));
-            }
+            
             const bookUpdated = await BookModel.findByIdAndUpdate(
                 book?._id,
                 {
@@ -216,7 +236,7 @@ export const approveAndCheckoutRequest = catchAsyncErrors(
             );
             res
                 .status(200)
-                .json({ message: "Request approved and checked out successfully", request });
+                .json({ message: "Request approved and checked out successfully", requestUpdate });
         } catch (error: any) {
             console.log(error);
             return next(new ErrorHandler(error.message, 400));
@@ -234,6 +254,9 @@ export const checkInRequest = catchAsyncErrors(
             const patron = await UserModel.findById(patronId);
             if (!patron) {
                 return next(new ErrorHandler("Patron not found", 404));
+            }
+            if (patron.role !== "patron") {
+                return next(new ErrorHandler("Only librarians can confirm check in", 400));
             }
             const request = await RequestModel.findByIdAndUpdate(
                 requestId,
