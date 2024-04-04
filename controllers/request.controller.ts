@@ -67,7 +67,7 @@ export const getAllRequests = catchAsyncErrors(
       if (!user) {
         return next(new ErrorHandler("User not found", 404));
       }
-      if (user.role !== "patron" && user.role !== "admin") {
+      if (user.role !== "PATRON" && user.role !== "admin") {
         return next(new ErrorHandler("Don't do this", 400));
       }
       const requests = await RequestModel.find();
@@ -90,7 +90,7 @@ export const approveRequest = catchAsyncErrors(
       if (!patron) {
         return next(new ErrorHandler("Patron not found", 404));
       }
-      if (patron.role !== "Patron") {
+      if (patron.role !== "PATRON") {
         return next(
           new ErrorHandler("Only librarians can approve requests", 400)
         );
@@ -134,7 +134,7 @@ export const checkoutRequest = catchAsyncErrors(
       if (!patron) {
         return next(new ErrorHandler("Patron not found", 404));
       }
-      if (patron.role !== "Patron") {
+      if (patron.role !== "PATRON") {
         return next(
           new ErrorHandler("Only librarians can approve checkout", 400)
         );
@@ -183,7 +183,7 @@ export const approveAndCheckoutRequest = catchAsyncErrors(
       if (!patron) {
         return next(new ErrorHandler("Patron not found", 404));
       }
-      if (patron.role !== "patron") {
+      if (patron.role !== "PATRON") {
         return next(
           new ErrorHandler("Only librarians can approve checkout", 400)
         );
@@ -210,8 +210,10 @@ export const approveAndCheckoutRequest = catchAsyncErrors(
         createdAt: new Date(),
         updatedAt: new Date(),
       }
+
+      await RequestModel.create(request);
       
-      const bookUpdated = await BookModel.findByIdAndUpdate(
+      await BookModel.findByIdAndUpdate(
         book?._id,
         {
           availableStock: book!.availableStock! - 1,
@@ -241,7 +243,7 @@ export const checkInRequest = catchAsyncErrors(
       if (!patron) {
         return next(new ErrorHandler("Patron not found", 404));
       }
-      if (patron.role !== "patron") {
+      if (patron.role !== "PATRON") {
         return next(
           new ErrorHandler("Only librarians can approve checkout", 400)
         );
@@ -320,7 +322,7 @@ export const getRequestByStatus = catchAsyncErrors(
       if (!user) {
         return next(new ErrorHandler("User not found", 404));
       }
-      if (user.role !== "patron" && user.role !== "admin") {
+      if (user.role !== "PATRON" && user.role !== "ADMIN") {
         return next(new ErrorHandler("Don't do this", 400));
       }
       const requests = await RequestModel.find({ status });
