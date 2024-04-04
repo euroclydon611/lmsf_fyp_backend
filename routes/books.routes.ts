@@ -10,9 +10,9 @@ import {
 import { isAuthenticated } from "../middleware/auth";
 import multerMiddleware from "../middleware/multerMiddleware";
 
-router.post("/create-book", multerMiddleware().single("file"), createBook);
+router.post("/create-book", multerMiddleware().array("files"), createBook);
 
-router.get("/get-books", getAllBooks);
+router.get("/get-all-books", getAllBooks);
 
 router.put("/update-book", isAuthenticated, updateBook);
 

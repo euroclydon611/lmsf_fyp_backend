@@ -8,10 +8,12 @@ import ErrorHandler from "./utils/ErrorHandler";
 import { exec } from "child_process";
 import { corsOptions } from "./config/corsOptions";
 import { refreshAccessTokenMiddleware } from "./services/refresh.service";
+import path from "path";
 
 app.use(express.json({ limit: "50mb" }));
 app.use(cookieParser());
 app.use(cors(corsOptions));
+app.use("/", express.static(path.join(__dirname, "./uploads")));
 
 //routers
 import userRoutes from "./routes/user.routes";

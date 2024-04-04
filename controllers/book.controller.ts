@@ -2,23 +2,37 @@ import { Request, Response, NextFunction } from "express";
 import ErrorHandler from "../utils/ErrorHandler";
 import catchAsyncErrors from "../middleware/catchAsyncErrors";
 import BookModel, { IBook } from "../models/books.model";
+import UserModel from "../models/user.model";
 
 export const createBook = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const bookData = req.body as IBook;
+      console.log(req.body);
 
-      if (!bookData) {
-        return next(new ErrorHandler("book data is empty", 400));
+      const patronId = req.body.patronId;
+
+      const patron = await UserModel.findById(patronId);
+
+      if (!patron) {
+        return next(new ErrorHandler("Patron Id is invalid!", 400));
+      } else {
+        const files: any = req.files;
+        const imageUrls =
+          files && files?.map((file: any) => `${file.filename}`);
+
+        const bookData = req.body;
+        bookData.images = imageUrls;
+        bookData.patron = patron;
+        bookData.availableStock = req.body.totalStock;
+
+        const product = await BookModel.create(bookData);
+
+        res.status(201).json({
+          success: true,
+          message: "Book created",
+          product,
+        });
       }
-
-      const created_book = await BookModel.create(bookData);
-
-      console.log("reached", created_book);
-
-      res
-        .status(201)
-        .json({ message: "Book created successfully", book: created_book });
     } catch (error: any) {
       console.log(error);
       return next(new ErrorHandler(error.message, 400));
