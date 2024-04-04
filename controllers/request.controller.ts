@@ -175,8 +175,8 @@ export const checkoutRequest = catchAsyncErrors(
 export const approveAndCheckoutRequest = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { requestId, patronId, inPrevDate } = req.body;
-      if (!requestId) {
+      const { studentId, patronId, inPrevDate, bookId } = req.body;
+      if (!studentId || !patronId || !inPrevDate || !bookId) {
         return next(new ErrorHandler("Invalid entries", 400));
       }
       const patron = await UserModel.findById(patronId);
@@ -188,18 +188,26 @@ export const approveAndCheckoutRequest = catchAsyncErrors(
           new ErrorHandler("Only librarians can approve checkout", 400)
         );
       }
-      const request = await RequestModel.findByIdAndUpdate(
-        requestId,
-        {
-          approveDate: new Date(),
-          outDate: new Date(),
-          inPrevDate: inPrevDate,
-          status: "Out",
-          approvedBy: patronId,
-          updatedAt: new Date(),
-        },
-        { new: true }
-      );
+      const student = await UserModel.findById(studentId);
+      if (!student) {
+        return next(new ErrorHandler("Student not found", 404));
+      }
+      if (student.role !== "student") {
+        
+      }
+      const request = {
+        userId: studentId,
+        bookId: bookId,
+        requestDate: new Date(),
+        approveDate: null,
+        inDate: null,
+        outDate: null,
+        approvedBy: null,
+        inPrevDate: inPrevDate,
+        status: "Approved",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
       const book = await BookModel.findById(request?.bookId);
       if (!book) {
         return next(new ErrorHandler("Book not found", 404));
