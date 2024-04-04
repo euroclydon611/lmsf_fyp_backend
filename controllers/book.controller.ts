@@ -10,9 +10,15 @@ export const createBook = catchAsyncErrors(
       console.log(req.body);
 
       const patronId = req.body.patronId;
+      if (!patronId) {
+        return next(new ErrorHandler("Patron Id is invalid!", 400));
+      }
 
       const patron = await UserModel.findById(patronId);
 
+     if (patron?.role !== "patron") {
+        return next(new ErrorHandler("Only librarians can add books", 400));
+     }
       if (!patron) {
         return next(new ErrorHandler("Patron Id is invalid!", 400));
       } else {

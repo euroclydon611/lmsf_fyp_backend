@@ -183,7 +183,7 @@ export const approveAndCheckoutRequest = catchAsyncErrors(
       if (!patron) {
         return next(new ErrorHandler("Patron not found", 404));
       }
-      if (patron.role !== "Patron") {
+      if (patron.role !== "patron") {
         return next(
           new ErrorHandler("Only librarians can approve checkout", 400)
         );
@@ -192,26 +192,25 @@ export const approveAndCheckoutRequest = catchAsyncErrors(
       if (!student) {
         return next(new ErrorHandler("Student not found", 404));
       }
-      if (student.role !== "student") {
-        
+      const book = await BookModel.findById(bookId);
+      if (!book) {
+        return next(new ErrorHandler("Book not found", 404));
       }
+
       const request = {
         userId: studentId,
         bookId: bookId,
         requestDate: new Date(),
-        approveDate: null,
+        approveDate: new Date(),
         inDate: null,
-        outDate: null,
-        approvedBy: null,
+        outDate: new Date(),
+        approvedBy: patronId,
         inPrevDate: inPrevDate,
         status: "Approved",
         createdAt: new Date(),
         updatedAt: new Date(),
       }
-      const book = await BookModel.findById(request?.bookId);
-      if (!book) {
-        return next(new ErrorHandler("Book not found", 404));
-      }
+      
       const bookUpdated = await BookModel.findByIdAndUpdate(
         book?._id,
         {
@@ -241,6 +240,11 @@ export const checkInRequest = catchAsyncErrors(
       const patron = await UserModel.findById(patronId);
       if (!patron) {
         return next(new ErrorHandler("Patron not found", 404));
+      }
+      if (patron.role !== "patron") {
+        return next(
+          new ErrorHandler("Only librarians can approve checkout", 400)
+        );
       }
       const request = await RequestModel.findByIdAndUpdate(
         requestId,
