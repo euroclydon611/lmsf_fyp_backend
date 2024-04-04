@@ -1,4 +1,4 @@
-import { NextFunction } from "express";
+import { NextFunction, Request, Response } from "express";
 import catchAsyncErrors from "../middleware/catchAsyncErrors";
 import NotificationModel from "../models/notification.model";
 import ErrorHandler from "../utils/ErrorHandler";
@@ -12,7 +12,9 @@ export const getNotificationByUser = catchAsyncErrors(
       }
       console.log("id", id);
       const notifications = await NotificationModel.find({ userId: id });
-      res.status(200).json({ message: "Retrieved all notifications", notifications });
+      res
+        .status(200)
+        .json({ message: "Retrieved all notifications", notifications });
     } catch (error: any) {
       console.log(error);
       return next(new ErrorHandler(error.message, 400));
