@@ -16,7 +16,7 @@ export const createBook = catchAsyncErrors(
 
       const patron = await UserModel.findById(patronId);
 
-     if (patron?.role !== "patron") {
+     if (patron?.role !== "PATRON") {
         return next(new ErrorHandler("Only librarians can add books", 400));
      }
       if (!patron) {
