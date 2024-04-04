@@ -175,35 +175,42 @@ export const checkoutRequest = catchAsyncErrors(
 export const approveAndCheckoutRequest = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { requestId, patronId, inPrevDate } = req.body;
-      if (!requestId) {
+      const { studentId, patronId, inPrevDate, bookId } = req.body;
+      if (!studentId || !patronId || !inPrevDate || !bookId) {
         return next(new ErrorHandler("Invalid entries", 400));
       }
       const patron = await UserModel.findById(patronId);
       if (!patron) {
         return next(new ErrorHandler("Patron not found", 404));
       }
-      if (patron.role !== "Patron") {
+      if (patron.role !== "patron") {
         return next(
           new ErrorHandler("Only librarians can approve checkout", 400)
         );
       }
-      const request = await RequestModel.findByIdAndUpdate(
-        requestId,
-        {
-          approveDate: new Date(),
-          outDate: new Date(),
-          inPrevDate: inPrevDate,
-          status: "Out",
-          approvedBy: patronId,
-          updatedAt: new Date(),
-        },
-        { new: true }
-      );
-      const book = await BookModel.findById(request?.bookId);
+      const student = await UserModel.findById(studentId);
+      if (!student) {
+        return next(new ErrorHandler("Student not found", 404));
+      }
+      const book = await BookModel.findById(bookId);
       if (!book) {
         return next(new ErrorHandler("Book not found", 404));
       }
+
+      const request = {
+        userId: studentId,
+        bookId: bookId,
+        requestDate: new Date(),
+        approveDate: new Date(),
+        inDate: null,
+        outDate: new Date(),
+        approvedBy: patronId,
+        inPrevDate: inPrevDate,
+        status: "Approved",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }
+      
       const bookUpdated = await BookModel.findByIdAndUpdate(
         book?._id,
         {
@@ -233,6 +240,11 @@ export const checkInRequest = catchAsyncErrors(
       const patron = await UserModel.findById(patronId);
       if (!patron) {
         return next(new ErrorHandler("Patron not found", 404));
+      }
+      if (patron.role !== "patron") {
+        return next(
+          new ErrorHandler("Only librarians can approve checkout", 400)
+        );
       }
       const request = await RequestModel.findByIdAndUpdate(
         requestId,
