@@ -26,7 +26,7 @@ export const updateNotification = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { notificationId } = req.body;
-      if (notificationId) {
+      if (!notificationId) {
         return next(new ErrorHandler("Invalid entries", 400));
       }
       const notification = await NotificationModel.findByIdAndUpdate(
