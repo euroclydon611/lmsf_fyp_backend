@@ -11,7 +11,9 @@ export const getNotificationByUser = catchAsyncErrors(
         return next(new ErrorHandler("Invalid entries", 400));
       }
       console.log("id", id);
-      const notifications = await NotificationModel.find({ userId: id });
+      const notifications = await NotificationModel.find({ userId: id }).sort(
+        "-createdAt"
+      );
       res
         .status(200)
         .json({ message: "Retrieved all notifications", notifications });

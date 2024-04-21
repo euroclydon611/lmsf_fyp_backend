@@ -20,10 +20,16 @@ interface IRegistrationBody {
 export const UserRegistration = catchAsyncErrors(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { index_no, surname, first_name, other_name, password, date_of_birth, role } =
-        req.body as IRegistrationBody;
+      const {
+        index_no,
+        surname,
+        first_name,
+        other_name,
+        password,
+        date_of_birth,
+        role,
+      } = req.body as IRegistrationBody;
 
-   
       const isStaffExist = await UserModel.findOne({ index_no });
       if (isStaffExist) {
         return next(new ErrorHandler("Student already exists", 400));
@@ -130,13 +136,6 @@ export const UserLogout = catchAsyncErrors(
     try {
       const user = await UserModel.findById(req.user?._id);
 
-      if (user) {
-        const lastSeen = new Date();
-        user.lastSeen = lastSeen;
-        user.status = false;
-        await user.save();
-      }
-
       res.cookie("access_token", "", { maxAge: 1 });
       console.log(req.user);
 
@@ -186,7 +185,7 @@ export const updatePassword = catchAsyncErrors(
   }
 );
 
-//get all users
+//get all users that are students
 interface QueryParams {
   page?: string;
   limit?: string;
@@ -206,12 +205,9 @@ export const AllUsers = catchAsyncErrors(
       const searchQuery = req.query.search || "";
       const searchFilters = {
         $or: [
-          { staffID: { $regex: searchQuery, $options: "i" } },
-          { fullName: { $regex: searchQuery, $options: "i" } },
-          { organization: { $regex: searchQuery, $options: "i" } },
-          { userType: { $regex: searchQuery, $options: "i" } },
-          { toOrg: { $regex: searchQuery, $options: "i" } },
-          { fromOrg: { $regex: searchQuery, $options: "i" } },
+          { index_no: { $regex: searchQuery, $options: "i" } },
+          { first_name: { $regex: searchQuery, $options: "i" } },
+          { surname: { $regex: searchQuery, $options: "i" } },
         ],
       };
 

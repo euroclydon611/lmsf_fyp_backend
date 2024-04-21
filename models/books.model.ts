@@ -12,7 +12,7 @@ export interface IBook {
   category: string;
   totalStock: number;
   availableStock: number;
-  patronId: string;
+  patronId: any;
   patron: Object;
   createdAt: Date;
   updatedAt: Date;
@@ -34,7 +34,7 @@ const bookSchema = new Schema<IBook>(
     category: { type: String },
     totalStock: { type: Number },
     availableStock: { type: Number },
-    patronId: { type: String },
+    patronId: { type: Schema.Types.ObjectId, ref: "user" }, // Foreign key reference to the User collection
     patron: {
       type: Object,
       required: true,
