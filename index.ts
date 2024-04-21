@@ -9,6 +9,7 @@ import { exec } from "child_process";
 import { corsOptions } from "./config/corsOptions";
 import { refreshAccessTokenMiddleware } from "./services/refresh.service";
 import path from "path";
+import cron from "node-cron";
 
 app.use(express.json({ limit: "50mb" }));
 app.use(cookieParser());
@@ -20,6 +21,7 @@ import userRoutes from "./routes/user.routes";
 import bookRoutes from "./routes/books.routes";
 import notificationRoutes from "./routes/notification.routes";
 import requestRoutes from "./routes/request.routes";
+import RequestModel from "./models/request.model";
 
 //testing api
 app.get("/test", (req: Request, res: Response, next: NextFunction) => {
@@ -33,29 +35,43 @@ app.use(refreshAccessTokenMiddleware);
 
 app.use("/api/v1", userRoutes, bookRoutes, notificationRoutes, requestRoutes);
 
-//route to backup the database
-app.get("/backup", (req: Request, res: Response, next: NextFunction) => {
-  exec(
-    `mongodump --db LIBRARY_MGT_DB --out "C:\\Users\\GEORGE MENSAH SENIOR\\Desktop"`,
-    (error, stdout, stderr) => {
-      if (error) {
-        console.error(`Error: ${error.message}`);
-        return res
-          .status(500)
-          .json({ success: false, message: "Backup failed error" });
-      }
-      if (stderr) {
-        console.error(`stderr: ${stderr}`);
-        return res
-          .status(500)
-          .json({ success: false, message: "Backup failed stderr" });
-      }
-      console.log(`stdout: ${stdout}`);
-      return res
-        .status(200)
-        .json({ success: true, message: "Backup completed" });
-    }
-  );
+// Function to calculate fines and update requests
+const calculateFinesAndUpdate = async () => {
+  // Get all requests where inPrevDate has passed and status is "Out"
+  const requests = await RequestModel.find({
+    inPrevDate: { $lt: new Date() },
+    status: { $eq: "Out" },
+  });
+
+  // Calculate fines for each request
+  requests.forEach(async (request: any) => {
+    // Calculate days overdue
+    const daysOverdue: number = Math.ceil(
+      (new Date().getTime() - new Date(request.inPrevDate).getTime()) /
+        (1000 * 60 * 60 * 24)
+    );
+
+    // Calculate fine amount (assuming 10 cedis per day)
+    const fineAmount: number = daysOverdue * 10;
+
+    // Update the request with the fine amount and status
+    await RequestModel.findByIdAndUpdate(request._id, {
+      fine: `${fineAmount} cedis`,
+      status: "Overdue",
+    });
+  });
+};
+
+// Define the cron job to run daily at midnight
+// cron.schedule("0 0 * * *", () => {
+//   console.log("Running fine calculation and update job...");
+//   calculateFinesAndUpdate();
+// });
+
+// Define the cron job to run every 2 minutes
+cron.schedule("*/2 * * * *", () => {
+  console.log("Running fine calculation and update job...");
+  calculateFinesAndUpdate();
 });
 
 //unknown routes
