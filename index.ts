@@ -5,7 +5,6 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import ErrorHandlerMiddleware from "./middleware/error";
 import ErrorHandler from "./utils/ErrorHandler";
-import { exec } from "child_process";
 import { corsOptions } from "./config/corsOptions";
 import { refreshAccessTokenMiddleware } from "./services/refresh.service";
 import path from "path";
