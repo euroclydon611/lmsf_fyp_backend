@@ -84,7 +84,7 @@ export const UserLogin = catchAsyncErrors(
       const isPasswordMatch = await user.comparePassword(password);
 
       if (!isPasswordMatch) {
-        return next(new ErrorHandler("Incorrect email or password", 400));
+        return next(new ErrorHandler("Incorrect index number or password", 400));
       }
 
       // Check if the password is the default "secret"
